@@ -2854,6 +2854,14 @@ msgstr "단위당 가격"
 msgid "Discount per"
 msgstr "단위당 할인"
 
+#: app/templates/fuel/form.html:88
+msgid "Discount per fill-up"
+msgstr "주유당 할인"
+
+#: app/templates/fuel/form.html:94
+msgid "Fixed discount applied once to this fill-up."
+msgstr "이번 주유에 한 번만 적용되는 고정 할인."
+
 #: app/templates/fuel/form.html:84
 msgid "Optional loyalty discount, subtracted from the price per unit."
 msgstr "선택 사항인 멤버십 할인으로, 단위당 가격에서 차감됩니다."

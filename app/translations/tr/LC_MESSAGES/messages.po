@@ -2917,6 +2917,14 @@ msgstr "Birim Fiyat"
 msgid "Discount per"
 msgstr "Birim İndirim"
 
+#: app/templates/fuel/form.html:88
+msgid "Discount per fill-up"
+msgstr "Dolum başına indirim"
+
+#: app/templates/fuel/form.html:94
+msgid "Fixed discount applied once to this fill-up."
+msgstr "Bu doluma bir kez uygulanan sabit indirim."
+
 #: app/templates/fuel/form.html:84
 msgid "Optional loyalty discount, subtracted from the price per unit."
 msgstr "İsteğe bağlı sadakat indirimi, birim fiyattan düşülür."

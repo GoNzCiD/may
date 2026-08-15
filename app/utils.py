@@ -90,3 +90,27 @@ def first_day_of_week(locale):
         return 1
     base = tag.split('-', 1)[0]
     return 0 if base in _SUNDAY_FIRST_LOCALES else 1
+
+
+def calculate_fuel_amounts(volume, price_per_unit, discount_per_unit=None,
+                           discount_total=None, total_cost=None):
+    """Fill in a missing fuel price or total using both discount types.
+
+    ``price_per_unit`` is the price before discounts and ``total_cost`` is the
+    amount actually paid.  A per-unit discount is applied to every unit and a
+    total discount is applied once to the whole fill-up.
+    """
+    unit_discount = discount_per_unit or 0
+    absolute_discount = discount_total or 0
+
+    if price_per_unit is None and volume and total_cost is not None:
+        price_per_unit = round(
+            (total_cost + absolute_discount) / volume + unit_discount, 3
+        )
+    elif total_cost is None and volume and price_per_unit is not None:
+        total_cost = round(
+            max(volume * (price_per_unit - unit_discount) - absolute_discount, 0),
+            2,
+        )
+
+    return price_per_unit, total_cost

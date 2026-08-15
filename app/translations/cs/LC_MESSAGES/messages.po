@@ -2915,6 +2915,14 @@ msgstr "Cena za"
 msgid "Discount per"
 msgstr "Sleva za"
 
+#: app/templates/fuel/form.html:88
+msgid "Discount per fill-up"
+msgstr "Sleva za tankování"
+
+#: app/templates/fuel/form.html:94
+msgid "Fixed discount applied once to this fill-up."
+msgstr "Pevná sleva uplatněná jednou na toto tankování."
+
 #: app/templates/fuel/form.html:84
 msgid "Optional loyalty discount, subtracted from the price per unit."
 msgstr "Volitelná věrnostní sleva odečtená od ceny za jednotku."

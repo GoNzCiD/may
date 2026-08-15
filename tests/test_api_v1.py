@@ -200,6 +200,26 @@ class TestV1FuelLogs:
         assert data['odometer'] == 11000.0
         assert 'id' in data
 
+    def test_create_fuel_log_applies_both_discounts(self, client, api_headers, sample_vehicle):
+        resp = client.post(
+            f'/api/v1/vehicles/{sample_vehicle.id}/fuel',
+            json={
+                'date': '2024-02-02',
+                'odometer': 11100,
+                'volume': 12.0,
+                'discount_per_unit': 0.10,
+                'discount_total': 1.0,
+                'total_cost': 11.0,
+            },
+            headers=api_headers
+        )
+        assert resp.status_code == 201
+        data = resp.get_json()
+        assert data['price_per_unit'] == 1.1
+        assert data['discount_per_unit'] == 0.1
+        assert data['discount_total'] == 1.0
+        assert data['total_cost'] == 11.0
+
     def test_create_fuel_log_missing_date(self, client, api_headers, sample_vehicle):
         resp = client.post(
             f'/api/v1/vehicles/{sample_vehicle.id}/fuel',

@@ -2915,6 +2915,14 @@ msgstr "Pris pr."
 msgid "Discount per"
 msgstr "Rabat pr."
 
+#: app/templates/fuel/form.html:88
+msgid "Discount per fill-up"
+msgstr "Rabat pr. tankning"
+
+#: app/templates/fuel/form.html:94
+msgid "Fixed discount applied once to this fill-up."
+msgstr "Fast rabat, der anvendes én gang på denne tankning."
+
 #: app/templates/fuel/form.html:84
 msgid "Optional loyalty discount, subtracted from the price per unit."
 msgstr "Valgfri loyalitetsrabat, som trækkes fra prisen pr. enhed."

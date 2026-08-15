@@ -2850,6 +2850,14 @@ msgstr "単価"
 msgid "Discount per"
 msgstr "割引額（単位あたり）"
 
+#: app/templates/fuel/form.html:88
+msgid "Discount per fill-up"
+msgstr "給油ごとの割引"
+
+#: app/templates/fuel/form.html:94
+msgid "Fixed discount applied once to this fill-up."
+msgstr "この給油に対して1回だけ適用される固定割引。"
+
 #: app/templates/fuel/form.html:84
 msgid "Optional loyalty discount, subtracted from the price per unit."
 msgstr "任意項目です。ポイント割引などを単価から差し引きます。"

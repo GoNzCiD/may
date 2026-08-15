@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app import db
-from app.utils import parse_decimal
+from app.utils import calculate_fuel_amounts, parse_decimal
 from app.models import Vehicle, FuelLog, Attachment, FuelStation, FuelPriceHistory, FUEL_TYPES
 from app.security import validate_file_upload, secure_filename_with_uuid, validate_positive_number
 from flask_babel import gettext as _
@@ -88,16 +88,25 @@ def new():
                 flash(err, 'error')
                 return render_template('fuel/new.html', vehicles=vehicles)
 
+        discount_total = None
+        if request.form.get('discount_total'):
+            discount_total, err = validate_positive_number(request.form.get('discount_total'), 'Total discount', max_value=100000)
+            if err:
+                flash(err, 'error')
+                return render_template('fuel/new.html', vehicles=vehicles)
+
         total_cost, err = validate_positive_number(request.form.get('total_cost'), 'Total cost', max_value=100000)
         if err:
             flash(err, 'error')
             return render_template('fuel/new.html', vehicles=vehicles)
 
-        # Derive the unit price from the amount paid when it was omitted.
-        # Add the discount back because total_cost represents the amount paid
-        # after the per-unit discount has been applied (#209).
-        if price_per_unit is None and volume and total_cost is not None:
-            price_per_unit = round(total_cost / volume + (discount_per_unit or 0), 3)
+        # Auto-calculate the missing unit price or total cost, accounting for any
+        # per-unit discount (#209). 
+        # When deriving the unit price, add the discount back because total_cost
+        # represents the amount paid after the discount.
+        price_per_unit, total_cost = calculate_fuel_amounts(
+            volume, price_per_unit, discount_per_unit, discount_total, total_cost
+        )
 
         log = FuelLog(
             vehicle_id=vehicle_id,
@@ -107,6 +116,7 @@ def new():
             volume=volume,
             price_per_unit=price_per_unit,
             discount_per_unit=discount_per_unit,
+            discount_total=discount_total,
             total_cost=total_cost,
             fuel_type=request.form.get('fuel_type') or None,
             is_full_tank=request.form.get('is_full_tank') == 'on',
@@ -115,10 +125,6 @@ def new():
             notes=request.form.get('notes')
         )
 
-        # Calculate total cost if not provided, applying any per-unit discount (#209)
-        if log.volume and log.price_per_unit and not log.total_cost:
-            effective_price = log.price_per_unit - (log.discount_per_unit or 0)
-            log.total_cost = round(log.volume * effective_price, 2)
 
         db.session.add(log)
         db.session.commit()
@@ -205,16 +211,19 @@ def edit(log_id):
         log.price_per_unit = parse_decimal(request.form.get('price_per_unit')) if request.form.get('price_per_unit') else None
         log.discount_per_unit = parse_decimal(request.form.get('discount_per_unit')) if request.form.get('discount_per_unit') else None
         log.total_cost = parse_decimal(request.form.get('total_cost')) if request.form.get('total_cost') else None
+        log.discount_total = parse_decimal(request.form.get('discount_total')) if request.form.get('discount_total') else None
         log.fuel_type = request.form.get('fuel_type') or None
         log.is_full_tank = request.form.get('is_full_tank') == 'on'
         log.is_missed = request.form.get('is_missed') == 'on'
         log.station = request.form.get('station')
         log.notes = request.form.get('notes')
 
-        # Calculate total cost if not provided, applying any per-unit discount (#209)
+        # Calculate total cost if not provided, applying any discounts (#209)
         if log.volume and log.price_per_unit and not log.total_cost:
-            effective_price = log.price_per_unit - (log.discount_per_unit or 0)
-            log.total_cost = round(log.volume * effective_price, 2)
+            _, log.total_cost = calculate_fuel_amounts(
+                log.volume, log.price_per_unit, log.discount_per_unit,
+                log.discount_total, log.total_cost
+            )
 
         # Reconcile fuel price history with the edited log.
         # Issue #170: linking a station to an existing log via edit must

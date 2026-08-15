@@ -2907,6 +2907,14 @@ msgstr "Cena za"
 msgid "Discount per"
 msgstr "Zniżka za"
 
+#: app/templates/fuel/form.html:88
+msgid "Discount per fill-up"
+msgstr "Zniżka za tankowanie"
+
+#: app/templates/fuel/form.html:94
+msgid "Fixed discount applied once to this fill-up."
+msgstr "Stała zniżka zastosowana jednorazowo do tego tankowania."
+
 #: app/templates/fuel/form.html:84
 msgid "Optional loyalty discount, subtracted from the price per unit."
 msgstr "Opcjonalna zniżka lojalnościowa, odejmowana od ceny jednostkowej."

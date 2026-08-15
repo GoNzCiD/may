@@ -21,7 +21,7 @@ from app.models import (
     TRIP_PURPOSES, CHARGER_TYPES
 )
 from app.services.tessie import TessieService
-from app.utils import parse_decimal
+from app.utils import calculate_fuel_amounts, parse_decimal
 from flask_babel import gettext as _
 from config import APP_VERSION
 
@@ -520,7 +520,7 @@ def api_create_fuel_log(vehicle_id):
     Create a fuel log
 
     Required fields: date, odometer
-    Optional fields: volume, price_per_unit, total_cost, is_full_tank, is_missed, station, notes
+    Optional fields: volume, price_per_unit, discount_per_unit, discount_total, total_cost, is_full_tank, is_missed, station, notes
     """
     user = get_api_user()
     vehicle = Vehicle.query.get_or_404(vehicle_id)
@@ -550,16 +550,19 @@ def api_create_fuel_log(vehicle_id):
         odometer=parse_decimal(data['odometer']),
         volume=parse_decimal(data['volume']) if data.get('volume') else None,
         price_per_unit=parse_decimal(data['price_per_unit']) if data.get('price_per_unit') else None,
+        discount_per_unit=parse_decimal(data['discount_per_unit']) if data.get('discount_per_unit') else None,
         total_cost=parse_decimal(data['total_cost']) if data.get('total_cost') else None,
+        discount_total=parse_decimal(data['discount_total']) if data.get('discount_total') else None,
         is_full_tank=data.get('is_full_tank', True),
         is_missed=data.get('is_missed', False),
         station=data.get('station'),
         notes=data.get('notes')
     )
 
-    # Auto-calculate total cost if not provided
-    if log.volume and log.price_per_unit and not log.total_cost:
-        log.total_cost = round(log.volume * log.price_per_unit, 2)
+    # Auto-calculate cost if not provided
+    log.price_per_unit, log.total_cost = calculate_fuel_amounts(
+        log.volume, log.price_per_unit, log.discount_per_unit, log.discount_total, log.total_cost
+    )
 
     db.session.add(log)
     db.session.commit()
@@ -606,6 +609,10 @@ def api_update_fuel_log(log_id):
         log.volume = parse_decimal(data['volume']) if data['volume'] else None
     if 'price_per_unit' in data:
         log.price_per_unit = parse_decimal(data['price_per_unit']) if data['price_per_unit'] else None
+    if 'discount_per_unit' in data:
+        log.discount_per_unit = parse_decimal(data['discount_per_unit']) if data['discount_per_unit'] else None
+    if 'discount_total' in data:
+        log.discount_total = parse_decimal(data['discount_total']) if data['discount_total'] else None
     if 'total_cost' in data:
         log.total_cost = parse_decimal(data['total_cost']) if data['total_cost'] else None
     if 'is_full_tank' in data:
@@ -616,6 +623,10 @@ def api_update_fuel_log(log_id):
         log.station = data['station']
     if 'notes' in data:
         log.notes = data['notes']
+
+    log.price_per_unit, log.total_cost = calculate_fuel_amounts(
+        log.volume, log.price_per_unit, log.discount_per_unit, log.discount_total, log.total_cost
+    )
 
     db.session.commit()
     return jsonify(log.to_dict())
@@ -1156,7 +1167,7 @@ def export_csv():
         writer = csv.writer(fuel_csv)
         writer.writerow([
             'id', 'vehicle_id', 'vehicle_name', 'date', 'odometer', 'odometer_unit',
-            'volume', 'price_per_unit', 'total_cost', 'is_full_tank',
+            'volume', 'price_per_unit', 'discount_per_unit', 'discount_total', 'total_cost', 'is_full_tank',
             'is_missed', 'station', 'notes', 'created_at'
         ])
         for vehicle in current_user.get_all_vehicles():
@@ -1165,7 +1176,7 @@ def export_csv():
                 writer.writerow([
                     log.id, vehicle.id, vehicle.name, log.date.isoformat(),
                     log.odometer, odometer_unit,
-                    log.volume, log.price_per_unit, log.total_cost,
+                    log.volume, log.price_per_unit, log.discount_per_unit, log.discount_total, log.total_cost,
                     log.is_full_tank, log.is_missed, log.station, log.notes,
                     log.created_at.isoformat() if log.created_at else ''
                 ])
@@ -2686,6 +2697,8 @@ def get_import_fields(data_type):
             {'name': 'odometer', 'label': 'Odometer', 'required': True, 'type': 'float'},
             {'name': 'volume', 'label': 'Volume', 'required': False, 'type': 'float'},
             {'name': 'price_per_unit', 'label': 'Price per Unit', 'required': False, 'type': 'float'},
+            {'name': 'discount_per_unit', 'label': 'Discount per Unit', 'required': False, 'type': 'float'},
+            {'name': 'discount_total', 'label': 'Total Discount', 'required': False, 'type': 'float'},
             {'name': 'total_cost', 'label': 'Total Cost', 'required': False, 'type': 'float'},
             {'name': 'is_full_tank', 'label': 'Full Tank', 'required': False, 'type': 'bool'},
             {'name': 'is_missed', 'label': 'Missed Fill-up', 'required': False, 'type': 'bool'},
@@ -2915,6 +2928,8 @@ def create_record(data_type, mapped_row, vehicle_id, user_id, date_format, user_
             user_id=user_id,
             date=date_val,
             odometer=odometer,
+            discount_per_unit=parse_float_value(mapped_row.get('discount_per_unit')),
+            discount_total=parse_float_value(mapped_row.get('discount_total')),
             volume=parse_float_value(mapped_row.get('volume')),
             price_per_unit=parse_float_value(mapped_row.get('price_per_unit')),
             total_cost=parse_float_value(mapped_row.get('total_cost')),

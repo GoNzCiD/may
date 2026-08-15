@@ -692,6 +692,7 @@ class FuelLog(db.Model):
     volume = db.Column(db.Float)  # stored in liters
     price_per_unit = db.Column(db.Float)  # price per the user's volume unit, as entered
     discount_per_unit = db.Column(db.Float)  # optional loyalty discount per liter (issue #209)
+    discount_total = db.Column(db.Float)  # optional fixed discount for the whole fill-up
     total_cost = db.Column(db.Float)
 
     fuel_type = db.Column(db.String(20), nullable=True)  # overrides vehicle primary; set when vehicle has secondary fuel type
@@ -769,6 +770,7 @@ class FuelLog(db.Model):
             'volume': self.volume,
             'price_per_unit': self.price_per_unit,
             'discount_per_unit': self.discount_per_unit,
+            'discount_total': self.discount_total,
             'total_cost': self.total_cost,
             'is_full_tank': self.is_full_tank,
             'is_missed': self.is_missed,

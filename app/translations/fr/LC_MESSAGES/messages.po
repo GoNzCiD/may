@@ -2929,6 +2929,14 @@ msgstr "Prix par"
 msgid "Discount per"
 msgstr "Remise par"
 
+#: app/templates/fuel/form.html:88
+msgid "Discount per fill-up"
+msgstr "Remise par plein"
+
+#: app/templates/fuel/form.html:94
+msgid "Fixed discount applied once to this fill-up."
+msgstr "Remise fixe appliquée une seule fois à ce plein."
+
 #: app/templates/fuel/form.html:84
 msgid "Optional loyalty discount, subtracted from the price per unit."
 msgstr "Remise de fidélité facultative, soustraite du prix unitaire."

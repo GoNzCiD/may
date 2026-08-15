@@ -2841,6 +2841,14 @@ msgstr "单价"
 msgid "Discount per"
 msgstr "每单位折扣"
 
+#: app/templates/fuel/form.html:88
+msgid "Discount per fill-up"
+msgstr "每次加油折扣"
+
+#: app/templates/fuel/form.html:94
+msgid "Fixed discount applied once to this fill-up."
+msgstr "仅对本次加油应用一次的固定折扣。"
+
 #: app/templates/fuel/form.html:84
 msgid "Optional loyalty discount, subtracted from the price per unit."
 msgstr "可选的会员折扣，将从单价中扣除。"

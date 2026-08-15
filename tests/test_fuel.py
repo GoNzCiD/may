@@ -126,6 +126,38 @@ class TestFuelNew:
         assert log is not None
         assert log.price_per_unit == 1.6
 
+    def test_absolute_discount_is_stored_and_used_for_price(self, auth_client, sample_vehicle):
+        resp = auth_client.post('/fuel/new', data={
+            'vehicle_id': str(sample_vehicle.id),
+            'date': '2024-03-07',
+            'odometer': '15600',
+            'volume': '12.0',
+            'discount_total': '1.0',
+            'total_cost': '11.0',
+            'is_full_tank': 'on',
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+        log = FuelLog.query.filter_by(vehicle_id=sample_vehicle.id, odometer=15600.0).first()
+        assert log is not None
+        assert log.price_per_unit == 1.0
+        assert log.discount_total == 1.0
+        assert log.total_cost == 11.0
+
+    def test_absolute_discount_is_applied_when_total_is_missing(self, auth_client, sample_vehicle):
+        auth_client.post('/fuel/new', data={
+            'vehicle_id': str(sample_vehicle.id),
+            'date': '2024-03-08',
+            'odometer': '15700',
+            'volume': '12.0',
+            'price_per_unit': '1.0',
+            'discount_total': '1.0',
+            'is_full_tank': 'on',
+        }, follow_redirects=True)
+        log = FuelLog.query.filter_by(vehicle_id=sample_vehicle.id, odometer=15700.0).first()
+        assert log is not None
+        assert log.discount_total == 1.0
+        assert log.total_cost == 11.0
+
     def test_new_redirects_to_vehicles_if_none(self, auth_client):
         # No vehicles exist for this user
         resp = auth_client.get('/fuel/new', follow_redirects=False)
